@@ -1,0 +1,13 @@
+name: pymodule
+channels:
+    - conda-forge
+dependencies:
+    - astropy
+    - h5py
+    - matplotlib
+    - numpy
+    - obspy
+    - pyproj
+    - pyyaml
+    - scipy
+    - setuptools

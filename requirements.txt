@@ -1,0 +1,10 @@
+astropy
+h5py
+matplotlib
+numpy
+obspy
+pymodule
+pyproj
+pyyaml
+scipy
+setuptools
