@@ -176,7 +176,7 @@ def x_cor(tr1, tr2, **kwargs):
     Welch = kwargs.get('Welch', False)
     subwin = kwargs.get('subwin', None)
     lap = kwargs.get('lap', None)
-    op = kwargs.get('op', 'corr').lower()
+    op = kwargs.get('operator', 'corr').lower()
 
     delta = tr1.stats.delta
     npts = min(tr1.stats.npts, tr2.stats.npts)
