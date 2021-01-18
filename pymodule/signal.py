@@ -286,6 +286,25 @@ def linrange(start, stop, step=1):
     return np.linspace(start, stop, num)
 
 
+def _init_nd_shape_and_axes_sorted(x, shape, axes):
+    """
+    This part is from the old inversion of scipy
+
+    Handle and sort shape and axes arguments for n-dimensional transforms.
+
+    This is identical to `_init_nd_shape_and_axes`, except the axes are
+    returned in sorted order and the shape is reordered to match.
+    """
+    noaxes = axes is None
+    shape, axes = sp.fft._helper._init_nd_shape_and_axes(x, shape, axes)
+
+    if not noaxes:
+        shape = shape[axes.argsort()]
+        axes.sort()
+
+    return shape, axes
+
+
 def conv_spc(in1, in2, axes=None):
     """
     Return spectra of convolution (spectral multiplication).
@@ -303,7 +322,7 @@ def conv_spc(in1, in2, axes=None):
     elif in1.size == 0 or in2.size == 0:  # empty arrays
         return np.array([])
 
-    _, axes = sp.fftpack.helper._init_nd_shape_and_axes_sorted(
+    _, axes = _init_nd_shape_and_axes_sorted(
         in1,
         shape=None,
         axes=axes,
