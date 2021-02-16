@@ -5,6 +5,7 @@ from astropy import convolution as ap_conv
 import numpy as np
 from obspy.signal.cross_correlation import correlate, xcorr_max
 import scipy as sp
+from scipy.fft import fft, next_fast_len, rfft, rfftfreq
 from scipy.optimize import curve_fit
 from scipy.interpolate import CubicSpline
 import scipy.ndimage
@@ -256,9 +257,9 @@ def spectrum(a, delta=1, **kwargs):
     """
     nfreq = kwargs.get('nfreq')
     if nfreq is None:
-        nfreq = sp.fftpack.next_fast_len(a.size)
-    spectrum = np.fft.rfft(a, nfreq)
-    freqs = np.fft.rfftfreq(n=nfreq, d=delta)
+        nfreq = next_fast_len(a.size)
+    spectrum = rfft(a, nfreq)
+    freqs = rfftfreq(n=nfreq, d=delta)
 
     am = np.abs(spectrum)
     ph = np.angle(spectrum)
@@ -286,15 +287,15 @@ def linrange(start, stop, step=1):
     return np.linspace(start, stop, num)
 
 
-def conv_spc(in1, in2, axes=None):
+def conv_spc(in1, in2):
     """
-    Return spectra of convolution (spectral multiplication).
+    Return spectra of convolution (spectral multiplication)
+    of two 1-D signals.
 
-    https://github.com/scipy/scipy/blob/v1.3.0/scipy/signal/signaltools.py#L282-L440
+    https://github.com/scipy/scipy/blob/v1.6.0/scipy/signal/signaltools.py#L551-L663
     """
     in1 = np.asarray(in1)
     in2 = np.asarray(in2)
-    noaxes = axes is None
 
     if in1.ndim == in2.ndim == 0:  # scalar inputs
         return in1 * in2
@@ -303,35 +304,10 @@ def conv_spc(in1, in2, axes=None):
     elif in1.size == 0 or in2.size == 0:  # empty arrays
         return np.array([])
 
-    _, axes = sp.fftpack.helper._init_nd_shape_and_axes_sorted(
-        in1,
-        shape=None,
-        axes=axes,
-    )
-
-    if not noaxes and not axes.size:
-        raise ValueError("when provided, axes cannot be empty")
-
-    if noaxes:
-        other_axes = np.array([], dtype=np.intc)
-    else:
-        other_axes = np.setdiff1d(np.arange(in1.ndim), axes)
-
-    s1 = np.array(in1.shape)
-    s2 = np.array(in2.shape)
-
-    if not np.all((s1[other_axes] == s2[other_axes])
-                  | (s1[other_axes] == 1) | (s2[other_axes] == 1)):
-        raise ValueError("incompatible shapes for in1 and in2:"
-                         " {0} and {1}".format(in1.shape, in2.shape))
-
-    shape = np.maximum(s1, s2)
-    shape[axes] = s1[axes] + s2[axes] - 1
-
-    # Speed up FFT by padding to optimal size for sp.fftpack
-    fshape = [sp.fftpack.helper.next_fast_len(d) for d in shape[axes]]
-    sp1 = np.fft.fftn(in1, fshape, axes=axes)
-    sp2 = np.fft.fftn(in2, fshape, axes=axes)
+    # Speed up FFT by padding to optimal size
+    fshape = next_fast_len(in1.size+in2.size-1)
+    sp1 = fft(in1, fshape)
+    sp2 = fft(in2, fshape)
 
     return sp1 * sp2
 
