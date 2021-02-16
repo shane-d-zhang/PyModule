@@ -176,7 +176,7 @@ def x_cor(tr1, tr2, **kwargs):
     Welch = kwargs.get('Welch', False)
     subwin = kwargs.get('subwin', None)
     lap = kwargs.get('lap', None)
-    op = kwargs.get('op', 'corr').lower()
+    op = kwargs.get('operator', 'corr').lower()
 
     delta = tr1.stats.delta
     npts = min(tr1.stats.npts, tr2.stats.npts)
@@ -274,19 +274,19 @@ def _data_stack(st, **kwargs):
 
     data = 0
     for k, tr in enumerate(st):
-        if 'none' in weight:
+        if weight in ['none']:
             wi = 1
-        elif 'unit' in weight:
+        elif weight in ['unit']:
             wi = 1 / np.abs(tr.data).max()
-        elif ('rms' in weight) or ('snr' in weight):
+        elif weight in ['rms', 'rms_noise', 'snr']:
             _, rms, snr_ = snr(tr, return_all=True, **kwargs)
             if snr_ < 0:
                 ntr -= 1
             else:
-                if 'rms' in weight:
-                    wi = 1 / rms
-                elif 'snr' in weight:
+                if weight in ['snr']:
                     wi = snr_
+                else:
+                    wi = 1 / rms
                 tr.stats.sac[key_snr] = snr_
         else:
             raise NotImplementedError(f'Unknown weight method {weight}')
