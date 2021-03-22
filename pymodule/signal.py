@@ -401,9 +401,10 @@ def gradient_2d(z, dx, dy, order=2):
     return zx, zy
 
 
+
 def _lplc_green(zx, zy, dx, dy):
     """
-    Green's first identity with psi=1
+    Green's first identity with psi=constant
     https://www.wikiwand.com/en/Green%27s_identities#/Green's_first_identity
     """
     zxp = zx[1:-1, 2:]
@@ -412,31 +413,45 @@ def _lplc_green(zx, zy, dx, dy):
     zyn = zy[2:, 1:-1]
     zyp = zy[:-2, 1:-1]
 
-    loopsum = (zxp-zxn)*dy - (zyp-zyn)*dx
-    area = dy * dx
+    loopsum = (zxp-zxn) * 2*dy - (zyp-zyn) * 2*dx
+    area = 2*dy * 2*dx
     lplc = loopsum / area
 
     return lplc
 
 
-def _lplc_fd(z, dx, dy, order):
+def _lplc_fd_raw(z, dx, dy, order):
     coef_x = FDC_X_2[order]
     coef_y = FDC_Y_2[order]
 
-    zxx = sp.ndimage.convolve(z, coef_x) / dx**2
-    zyy = sp.ndimage.convolve(z, coef_y) / dy**2
+    z_xx = sp.ndimage.convolve(z, coef_x) / dx**2
+    z_yy = sp.ndimage.convolve(z, coef_y) / dy**2
 
-    lplc = zxx + zyy
+    lplc = z_xx + z_yy
 
     return lplc
 
 
-def laplacian_2d(dx, dy, z=None, zx=None, zy=None, method='Green', order=2):
+def _lplc_fd_gauss(z, dx, dy, sigma, mode='nearest', cval=0):
+    """
+    """
+    # Gaussian
+    # https://github.com/scipy/scipy/blob/adc4f4f7bab120ccfab9383aba272954a0a12fb0/scipy/ndimage/filters.py#L452-L497
+    kw = {'sigma': sigma, 'mode': mode, 'cval': cval}
+    # lplc = sp.ndimage.gaussian_laplace(z, **kw) / dy**2
+    z_xx = sp.ndimage.gaussian_filter(z, order=[0, 2], **kw) / dx**2
+    z_yy = sp.ndimage.gaussian_filter(z, order=[2, 0], **kw) / dy**2
+    lplc = z_xx + z_yy
+
+    return lplc
+
+
+def laplacian_2d(dx, dy, z=None, zx=None, zy=None, method='Green', **kwargs):
     method = method.lower()
     if method in ['green']:
         lplc = _lplc_green(zx, zy, dx, dy)
     elif method in ['fd', 'finite_difference']:
-        lplc = _lplc_fd(z, dx, dy, order)
+        lplc = _lplc_fd_gauss(z, dx, dy, **kwargs)
     else:
         raise ValueError(f'Unknow method {method}')
 
