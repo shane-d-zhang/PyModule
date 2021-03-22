@@ -13,7 +13,7 @@ def ryml(fin):
         return yaml.safe_load(f)
 
 
-def wpk(fnm, data, protocol=pickle.HIGHEST_PROTOCOL):
+def wpk(fnm, data, protocol=pickle.DEFAULT_PROTOCOL):
     """
     Save into pickle.
     """
